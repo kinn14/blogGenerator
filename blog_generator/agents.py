@@ -29,22 +29,6 @@ class Agents():
         # initialize llm
         self.blog_generator_model = Llm(llm_model_type, llm_model_name).get_llm_model()
 
-        # invoke llm to check the working
-        # system_message = SystemMessage(
-        #     content="You are a helpful blog generator assistant. Your are tasked to generate title and "
-        #     "content of the given topic."
-        #     )
-        
-        # ai_message = AIMessage(
-        #     content="Hello ! How can I assist you with blog generation today ? Do you have a topic in mind?"
-        # )
-        
-        # messages = self.blog_generator_model.invoke(
-        #     [system_message] + [ai_message]
-        #     )
-        # print(messages)
-
-
     def title_generator(self, state : BlogMessageState) -> BlogMessageState:
         """
             Generate a maximum 100 character title for a blog of a given topic.
@@ -71,8 +55,6 @@ class Agents():
             Return :
                 Updated state based on user response
         """
-        # question = AIMessage(content=f"\nAre you happy with the title {state['messages'][-1].content}? (yes/no):")
-        # feedback_msg = self.blog_generator_model.invoke([question])
         state['u_feedback'] = input(f"\nAre you happy with the title {state['title']}? (yes/no): ").strip().lower()
         feedback_msg = HumanMessage(content=f"User feedback : {state['u_feedback']}")
         state['messages'].append(feedback_msg)
@@ -91,10 +73,4 @@ class Agents():
         state['content'] = content_msg.content
         state['messages'].append(content_msg)
         return state
-    
-    # IF TITLE AND CONTENT GENERATORS WERE TO BE USED AS TOOLS
-    # def bind_and_generate_model(self) :
-    #     tools = [self.title_generator, self.content_generator]
-    #     self.blog_generator_model = self.model.bind_tools(tools=tools)
-    #     return self.blog_generator_model
     

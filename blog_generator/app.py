@@ -22,16 +22,12 @@ class BlogGeneratorGraph:
         else :
             return 'user_feedback'
 
-
     def create_application_graph(self):
         graph_builder = StateGraph(BlogMessageState)
-        # graph_builder.add_node('blog_generator', self.agents.call_model)
         graph_builder.add_node('title_generator', self.agents.title_generator)
         graph_builder.add_node('feedback', self.agents.user_feedback)
         graph_builder.add_node('content_generator', self.agents.content_generator)
         
-        # graph_builder.add_edge(START, 'blog_generator')
-        # graph_builder.add_edge('blog_generator', 'title_generator')
         graph_builder.add_edge('title_generator', 'feedback')
         graph_builder.add_conditional_edges('feedback', self.route_content_or_regenerate_title)
         graph_builder.add_edge('content_generator', END)
