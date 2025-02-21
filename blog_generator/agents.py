@@ -55,7 +55,9 @@ class Agents():
             Return :
                 Updated state based on user response
         """
-        state['u_feedback'] = input(f"\nAre you happy with the title {state['title']}? (yes/no): ").strip().lower()
+        # state['u_feedback'] = input(f"\nAre you happy with the title {state['title']}? (yes/no): ").strip().lower()
+        if state['u_feedback'] is None:
+            state['u_feedback'] = 'yes'
         feedback_msg = HumanMessage(content=f"User feedback : {state['u_feedback']}")
         state['messages'].append(feedback_msg)
         return state

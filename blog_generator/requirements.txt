@@ -7,3 +7,4 @@ langchain-groq
 langgraph
 langgraph-cli[inmem]
 python-dotenv
+streamlit

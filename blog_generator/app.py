@@ -15,6 +15,7 @@ class BlogGeneratorGraph:
         self.model = self.agents.blog_generator_model
 
     def route_content_or_regenerate_title(self, state:BlogMessageState):
+        print(state['u_feedback'])
         if  'yes' in state['u_feedback'].lower():
             return 'content_generator'
         elif 'no' in  state['u_feedback'].lower():
@@ -39,9 +40,9 @@ class BlogGeneratorGraph:
         return graph
 
 
-topic_name = 'Modern Mathematics'
-graph = BlogGeneratorGraph().create_application_graph()
-messages = graph.invoke({"messages":[HumanMessage(content=topic_name)]})
+# topic_name = 'Modern Mathematics'
+# graph = BlogGeneratorGraph().create_application_graph()
+# messages = graph.invoke({"messages":[HumanMessage(content=topic_name)]})
 
-for m in messages['messages']:
-    m.pretty_print()
+# for m in messages['messages']:
+#     m.pretty_print()
