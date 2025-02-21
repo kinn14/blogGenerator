@@ -2,11 +2,26 @@
 
 from llm_model import Llm
 from config import llm_model_type, llm_model_name
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_core.messages import (
+    SystemMessage, 
+    HumanMessage, 
+    AIMessage,
+    AnyMessage,
+    )
 from langchain_core.tools import tool
-from langgraph.graph import MessagesState
+from langgraph.graph import add_messages
+from typing_extensions import TypedDict
+from typing import Annotated, Optional
 
 
+
+class BlogMessageState(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
+    topic: Optional[str] = None  # Stores the topic
+    title: Optional[str] = None  # Stores the topic
+    content: Optional[str] = None  # Stores the topic
+    u_feedback: Optional[str] = None  # Stores the topic
+    
 
 class Agents():
 
@@ -15,14 +30,14 @@ class Agents():
         self.blog_generator_model = Llm(llm_model_type, llm_model_name).get_llm_model()
 
         # invoke llm to check the working
-        system_message = SystemMessage(
-            content="You are a helpful blog generator assistant. Your are tasked to generate title and "
-            "content of the given topic."
-            )
+        # system_message = SystemMessage(
+        #     content="You are a helpful blog generator assistant. Your are tasked to generate title and "
+        #     "content of the given topic."
+        #     )
         
-        ai_message = AIMessage(
-            content="Hello ! How can I assist you with blog generation today ? Do you have a topic in mind?"
-        )
+        # ai_message = AIMessage(
+        #     content="Hello ! How can I assist you with blog generation today ? Do you have a topic in mind?"
+        # )
         
         # messages = self.blog_generator_model.invoke(
         #     [system_message] + [ai_message]
@@ -30,7 +45,7 @@ class Agents():
         # print(messages)
 
 
-    def title_generator(self, state : MessagesState) -> MessagesState:
+    def title_generator(self, state : BlogMessageState) -> BlogMessageState:
         """
             Generate a maximum 100 character title for a blog of a given topic.
             Args: 
@@ -38,14 +53,16 @@ class Agents():
             Return:
                 title_name : string
         """
-        topic = state["messages"][-1].content
-        system_message = SystemMessage(content=topic)
-        title = self.blog_generator_model.invoke([system_message])
-        new_state = MessagesState(state["messages"] + [title])
-        return new_state
+        if state.get('topic') is None:
+            state['topic'] = state["messages"][-1].content
+        system_message = SystemMessage(content=f"Create a 100 character title for a blog on topic {state['topic']}")
+        state['title'] = self.blog_generator_model.invoke([system_message]).content
+        title_msg = AIMessage(content=f"The title for the topic {state['topic']} is : {state['title']}. Are you happy with it?")
+        state['messages'].append(title_msg)
+        return state
 
     # Define user feedback node
-    def user_feedback(self, state:MessagesState) :
+    def user_feedback(self, state:BlogMessageState) :
         """
             Function picks the last generated title for given topic and asks if the user is content or not.
             Args :
@@ -54,12 +71,14 @@ class Agents():
             Return :
                 Updated state based on user response
         """
-        feedback = input(f"\nAre you happy with the title {state.messages[-1].content}? (yes/no): ").strip().lower()
-        feedback_msg = HumanMessage(content=f"User feedback : {feedback}")
-        new_state = MessagesState(state["messages"] + [feedback_msg])
-        return new_state
+        # question = AIMessage(content=f"\nAre you happy with the title {state['messages'][-1].content}? (yes/no):")
+        # feedback_msg = self.blog_generator_model.invoke([question])
+        state['u_feedback'] = input(f"\nAre you happy with the title {state['title']}? (yes/no): ").strip().lower()
+        feedback_msg = HumanMessage(content=f"User feedback : {state['u_feedback']}")
+        state['messages'].append(feedback_msg)
+        return state
     
-    def content_generator(self, state : MessagesState) -> str:
+    def content_generator(self, state : BlogMessageState) :
         """
             Creates 500 lines of content for a blog of a given topic.
             Args: 
@@ -67,18 +86,15 @@ class Agents():
             Return:
                 topic_content : string
         """
-        system_message = SystemMessage(content=state[-2].content)
-        return  self.blog_generator_model.invoke([system_message]).content
+        system_message = SystemMessage(content=f"Generate 500 words content on {state['title']}")
+        content_msg = self.blog_generator_model.invoke([system_message])
+        state['content'] = content_msg.content
+        state['messages'].append(content_msg)
+        return state
     
-
     # IF TITLE AND CONTENT GENERATORS WERE TO BE USED AS TOOLS
     # def bind_and_generate_model(self) :
     #     tools = [self.title_generator, self.content_generator]
     #     self.blog_generator_model = self.model.bind_tools(tools=tools)
     #     return self.blog_generator_model
     
-    def call_model(self, state:MessagesState):
-            # # Overriding all previous messages from state while defining new topic
-            # # Thus my topic name will always be as state['messages'][0]
-            # initial_state = MessagesState(messages=state["messages"][-1])
-            return {"messages":self.blog_generator_model.invoke( state["messages"])}
