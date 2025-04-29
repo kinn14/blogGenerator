@@ -51,13 +51,18 @@ if st.session_state.blog_state['title']:
     col1, col2 = st.columns(2)
     if col1.button("✅ Use this Title"):
         st.session_state.blog_state.u_feedback = 'yes'
-        st.session_state.blog_state = graph.invoke(st.session_state.blog_state)
+        st.session_state.blog_state = graph.invoke(st.session_state.blog_state, start_at="feedback")
         st.subheader("Generated Content")
         st.write(st.session_state.blog_state['messages'][-1].content)
 
     if col2.button("🔁 Regenerate Title"):
-        st.session_state.blog_state.u_feedback = 'no'
-        st.session_state.blog_state = graph.invoke(st.session_state.blog_state)
+        st.session_state.state.u_feedback = 'no'
+        st.session_state.state = graph.invoke(st.session_state.state, start_at="feedback", end_at="feedback")
 
 else:
     st.warning("Please enter if you  are happy or not with title, we can regenerate.")
+
+    # if user_fb:
+    #         st.session_state.blog_state['u_feedback'] = user_fb
+    #         if user_fb == 'yes':
+    # else:
